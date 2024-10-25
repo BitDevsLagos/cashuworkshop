@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    
+    <!-- Include needed library amd method dependency -->
+    <script src="https://supertestnet.github.io/blind-sig-js/blindSigJS.js"></script>
+   	<script src="https://bundle.run/noble-secp256k1@1.2.14"></script>
+
+    
+    <!-- ECash does alot with hex...  -->
+
+    <script>
+        // Checks if a string is a valid hex 
+        var isValidHex = hex => {
+            if ( !hex ) return;
+            var length = hex.length;
+            if ( length % 2 ) return;
+            try {
+                var bigint = BigInt( "0x" + hex, "hex" );
+            } catch( e ) {
+                return;
+            }
+            var prepad = bigint.toString( 16 );
+            var i; for ( i=0; i<length; i++ ) prepad = "0" + prepad;
+            var padding = prepad.slice( -Math.abs( length ) );
+            return ( padding === hex );
+        }
+
+        // Comverts an hex string to bytes array
+        var hexToBytes = hex => Uint8Array.from( hex.match( /.{1,2}/g ).map( byte => parseInt( byte, 16 ) ) );
+
+        // Converts bytes array to hex string
+        var bytesToHex = bytes => bytes.reduce( ( str, byte ) => str + byte.toString( 16 ).padStart( 2, "0" ), "" );
+
+        // Converts hex to text
+        var hexToText = hex => {
+            var bytes = new Uint8Array(Math.ceil(hex.length / 2));
+            for (var i = 0; i < hex.length; i++) bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+            var text = new TextDecoder().decode( bytes );
+            return text;
+        }
+
+        // Delay function
+        var waitASec=num=>new Promise(res=>setTimeout(res,num*1000));
+    </script>
+
+</head>
+<body>
+    <center><h1>Balance</h1></center>
+    <center><h2 class="balance">0</h2></center></h1>
+    <center>
+        <button class="send">Send</button>
+        <button class="receive">Receive</button>
+    </center>
+</body>
+</html>

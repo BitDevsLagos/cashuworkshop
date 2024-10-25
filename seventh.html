@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <script src="https://supertestnet.github.io/blind-sig-js/blindSigJS.js"></script>
+   	<script src="https://bundle.run/noble-secp256k1@1.2.14"></script>
+
+    <script>
+        var isValidHex = hex => {
+            if ( !hex ) return;
+            var length = hex.length;
+            if ( length % 2 ) return;
+            try {
+                var bigint = BigInt( "0x" + hex, "hex" );
+            } catch( e ) {
+                return;
+            }
+            var prepad = bigint.toString( 16 );
+            var i; for ( i=0; i<length; i++ ) prepad = "0" + prepad;
+            var padding = prepad.slice( -Math.abs( length ) );
+            return ( padding === hex );
+        }
+
+        var hexToBytes = hex => Uint8Array.from( hex.match( /.{1,2}/g ).map( byte => parseInt( byte, 16 ) ) );
+
+        var bytesToHex = bytes => bytes.reduce( ( str, byte ) => str + byte.toString( 16 ).padStart( 2, "0" ), "" );
+
+        var hexToText = hex => {
+            var bytes = new Uint8Array(Math.ceil(hex.length / 2));
+            for (var i = 0; i < hex.length; i++) bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+            var text = new TextDecoder().decode( bytes );
+            return text;
+        }
+
+        var waitASec=num=>new Promise(res=>setTimeout(res,num*1000));
+    </script>
+
+</head>
+<body>
+    <center><h1>Balance</h1></center>
+    <center><h2 class="balance">0</h2></center></h1>
+    <center>
+        <button class="send">Send</button>
+        <button class="receive">Receive</button>
+    </center>
+
+
+    <script>
+        (async () => {
+            var secret_for_msg = bytesToHex(blindSigJS.getRand(32));
+            var endpoint = `https://testnut.cashu.space`;
+            sessionStorage[ "endpoint" ] = endpoint;
+            var keysets = await fetch( `${endpoint}/v1/keysets` );
+            keysets = await keysets.json();
+            keysets = keysets[ "keysets" ];
+            var keyset;
+            keysets.every( item => {if ( isValidHex( item.id ) && item.active ) {keyset = item.id;return;} return true;});
+            var pubkeys = await fetch(`${endpoint}/v1/keys/${keyset}`);
+            pubkeys = await pubkeys.json();
+            pubkeys = pubkeys[ "keysets" ][ 0 ][ "keys" ];
+            console.log( "pubkeys:", pubkeys );
+            var amount_i_want = 256;
+            var amt_pubkey = pubkeys[ amount_i_want ];
+            var post_data = {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({"amount": amount_i_want, "unit": "sat"}),
+            }
+            var invoice_data = await fetch( `${endpoint}/v1/mint/quote/bolt11`, post_data );
+            invoice_data = await invoice_data.json();
+
+            // Step 5 Pay that invoice (but not on testnut)
+            console.log( `pay this: ${invoice_data[ "request" ]}` );
+            var isPaid = async invoice => {
+                await waitASec( 5 );
+                var is_paid_info = await fetch( `${endpoint}/v1/mint/quote/bolt11/${invoice_data[ "quote" ]}` );
+                is_paid_info = await is_paid_info.json();
+                var is_paid = is_paid_info[ "paid" ];
+                console.log( "it is paid, right?", is_paid );
+                return is_paid || isPaid( invoice );
+            }
+            await isPaid( invoice_data[ "request" ] );
+
+        })();
+    </script>
+    
+    
+</body>
+</html>
