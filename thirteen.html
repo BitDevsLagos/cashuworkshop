@@ -52,7 +52,8 @@
 
         (async () => {
             var secret_for_msg = bytesToHex(blindSigJS.getRand(32));
-            var endpoint = `https://testnut.cashu.space`;
+            // var endpoint = `https://testnut.cashu.space`;
+            var endpoint = `https://nofees.testnut.cashu.space`;
             sessionStorage[ "endpoint" ] = endpoint;
             var keysets = await fetch( `${endpoint}/v1/keysets` );
             keysets = await keysets.json();

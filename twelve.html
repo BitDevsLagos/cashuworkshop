@@ -52,7 +52,7 @@
 
         (async () => {
             var secret_for_msg = bytesToHex(blindSigJS.getRand(32));
-            var endpoint = `https://testnut.cashu.space`;
+            var endpoint = `https://nofees.testnut.cashu.space`;
             sessionStorage[ "endpoint" ] = endpoint;
             var keysets = await fetch( `${endpoint}/v1/keysets` );
             keysets = await keysets.json();
@@ -62,7 +62,6 @@
             var pubkeys = await fetch(`${endpoint}/v1/keys/${keyset}`);
             pubkeys = await pubkeys.json();
             pubkeys = pubkeys[ "keysets" ][ 0 ][ "keys" ];
-            console.log( "pubkeys:", pubkeys );
             var amount_i_want = 256;
             var amt_pubkey = pubkeys[ amount_i_want ];
             var post_data = {
@@ -139,6 +138,7 @@
             var message = new blindSigJS.bsjMsg();
             var B_ = await message.createBlindedMessageFromString( secret_for_msg );
             var B_hex = blindSigJS.ecPointToHex( B_ );
+
             var new_utxo = {
                 "amount": utxos[ utxos.length - 1 ][ "amount" ],
                 "id": utxos[ utxos.length - 1 ][ "id" ],
@@ -148,6 +148,7 @@
                 "inputs": [ utxos[ utxos.length - 1 ] ],
                 "outputs": [ new_utxo ],
             }
+            console.log(swap_data);
             var post_data = {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
